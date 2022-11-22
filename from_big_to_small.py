@@ -30,7 +30,7 @@ ball_close_to_person = True
 ball_person_threshold = 0.065
 y_camera_threshold = 0.75
 
-def main():
+def cropping():
     os.chdir('/content/drive/MyDrive')
 
     ! mkdir Bundesliga
@@ -166,5 +166,4 @@ def main():
                     break
 
 if __name__ == '__main__':
-    main()
-    
+    cropping()
