@@ -1,29 +1,13 @@
 import os
-import cv2
-import sys
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.utils import class_weight
-from sklearn.metrics import ConfusionMatrixDisplay, classification_report, f1_score
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Rescaling, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.models import load_model
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.optimizers import Adam
 
-from google.colab import drive
-drive.mount('/content/drive')
-
-import absl.logging
-absl.logging.set_verbosity(absl.logging.ERROR)
-np.set_printoptions(suppress=True)
-
-GRAY_CROPPED_POSITIVES_FOLDER_PATH = '/content/drive/MyDrive/Bundesliga/PositiveFrames/frames_gray_dg/'
+GRAY_CROPPED_POSITIVES_FOLDER_PATH = '/Bundesliga/PositiveFrames/frames_gray_dg/'
 
 img_gen = ImageDataGenerator(
     rescale=1/255,
@@ -107,24 +91,54 @@ def compile_model(model, lr=0.001):
   return model
 
 
-def compile_model(model, lr=0.001):
-  """
-  Compiles the model
-  @model: keras model to train
-  @lr: learning rate (float)
-  """
-  optimizer = Adam(learning_rate=lr)
+def train_model(model, train_data=train_data, valid_data=valid_data, epochs=100, batch_size=16, patience=5,
+                account_weights=True):
+    """
+    Trains the model
+    @model: keras model to train
+    @train_data: training data (DirectoryIterator object)
+    @valid_data: validation data (DirectoryIterator object)
+    @epochs: number of epochs to perform for training (int)
+    @batch_size: number of samples that will be propagated through the network (int)
+    @patience: number of epochs to wait when using early stopping as callback (int)
+    @account_weights: either to assign a weight to each class to address imbalance dataset or not (boolean)
+    """
+    callback = EarlyStopping(monitor='val_loss',
+                             patience=patience,
+                             restore_best_weights=True)
 
-  model.compile(loss='sparse_categorical_crossentropy',
-              optimizer=optimizer,
-              metrics='accuracy',
-              )
-  return model
+    if account_weights:
+        train_events = dict()
+        for file in filecount:
+            if file[0] == 'train':
+                train_events[file[1]] = file[2]
+
+        total_train_samples = sum(train_events.values())
+
+        class_weights = dict()
+        ordered_events = ['challenge', 'play', 'throwin']
+        for i, event in enumerate(ordered_events):
+            class_weights[i] = total_train_samples / train_events[event]
+
+
+    else:
+        class_weights = None
+
+    model.fit(train_data,
+              validation_data=valid_data,
+              batch_size=batch_size,
+              epochs=epochs,
+              class_weight=class_weights,
+              steps_per_epoch=len(train_data),
+              validation_steps=len(valid_data),
+              callbacks=[callback])
+
+    return model
 
 
 def main():
     model = create_model(with_dropout=True)
-    model = compile_model(model, lr=0.000001) # 6 decimals
+    model = compile_model(model, lr=0.000001)
     model = train_model(model, epochs=10000, patience=50)
     return model
 

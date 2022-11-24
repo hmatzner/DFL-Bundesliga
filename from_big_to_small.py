@@ -4,8 +4,6 @@ import numpy as np
 import cv2
 from scipy import spatial
 from scipy.spatial.distance import cdist
-from google.colab import drive
-drive.mount('/content/drive')
 
 CLASS_INDEX = 0
 X_INDEX = 1
@@ -31,12 +29,11 @@ ball_person_threshold = 0.065
 y_camera_threshold = 0.75
 
 def cropping():
-    os.chdir('/content/drive/MyDrive')
 
     ! mkdir Bundesliga
     ! mkdir Bundesliga/PositiveFrames
 
-    POSITIVES_FOLDER = '/content/drive/MyDrive/Bundesliga/PositiveFrames/'
+    POSITIVES_FOLDER = '/Bundesliga/PositiveFrames/'
     FOLDER_LABELS = POSITIVES_FOLDER + 'detect/'
     FOLDER_FRAMES = POSITIVES_FOLDER + 'frames_ms2/'
 
@@ -59,10 +56,10 @@ def cropping():
 
     videos = [video for video in EVENTS_PER_VIDEO.keys()]
 
-    ! mkdir new_crops
+    ! mkdir crops
 
     for video in videos:
-        ! mkdir new_crops/$video
+        ! mkdir crops/$video
 
         for event in range(EVENTS_PER_VIDEO[video]):
             ball = False
@@ -115,13 +112,12 @@ def cropping():
                                 ball = False
 
                         if ball:
-                            distance_middle_screen = Y_SIZE / 2 - y
                             current_event_balls.append([frame_id, ymin, ymax, xmin, xmax])
 
                             for r in range(frame - 3, frame):
                                 img = cv2.imread(f'{FOLDER_FRAMES}{video}/{event_id}_{r}.jpg')
                                 cropped_image = img[ymin:ymax, xmin:xmax]
-                                cv2.imwrite(f'{POSITIVES_FOLDER}new_crops/{video}/{frame_id}_{r}cropped.jpg', cropped_image)
+                                cv2.imwrite(f'{POSITIVES_FOLDER}crops/{video}/{frame_id}_{r}cropped.jpg', cropped_image)
                             break
 
                 if ball:
@@ -162,7 +158,7 @@ def cropping():
                                    FIRST_FRAME_USED + 2):
                         img = cv2.imread(f'{FOLDER_FRAMES}{video}/{event_id}_{r}.jpg')
                         cropped_image = img[ymin:ymax, xmin:xmax]
-                        cv2.imwrite(f'{POSITIVES_FOLDER}new_crops/{video}/{frame_id}_{r}cropped.jpg', cropped_image)
+                        cv2.imwrite(f'{POSITIVES_FOLDER}crops/{video}/{frame_id}_{r}cropped.jpg', cropped_image)
                     break
 
 if __name__ == '__main__':
